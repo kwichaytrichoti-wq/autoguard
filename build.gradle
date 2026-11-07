@@ -29,6 +29,7 @@ dependencies {
     implementation "net.fabricmc:fabric-loader:${project.loader_version}"
     implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
     compileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+    testImplementation "org.ow2.asm:asm:9.7"
 }
 
 processResources {
@@ -57,7 +58,39 @@ tasks.register('sourceArchive', Zip) {
         exclude '.gradle/**', 'build/**', '.idea/**', '*.iml'
     }
 }
-tasks.named('build') { dependsOn tasks.named('sourceArchive') }
+
+/**
+ * Build-time mixin target verification.
+ * <p>
+ * Uses ASM to read the real Minecraft client jar (from Loom's runtime classpath) and
+ * verifies that every string-based mixin reference really exists. Fails the build if any
+ * target is missing, so a wrong annotation string (e.g. bad package in a @Redirect target)
+ * cannot reach CI or a released jar.
+ */
+tasks.register('verifyMixins', JavaExec) {
+    dependsOn tasks.named('testClasses')
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'dev.autoguard.verify.MixinVerifier'
+
+    // Find the Minecraft client jar on the runtime classpath.
+    doFirst {
+        def mcJar = sourceSets.main.runtimeClasspath.files.find { f ->
+            f.name.startsWith('minecraft-') && f.name.endsWith('.jar') && f.isFile()
+        }
+        if (mcJar == null) {
+            throw new GradleException("verifyMixins: could not find Minecraft client jar on runtime classpath")
+        }
+        args = [mcJar.absolutePath]
+    }
+}
+
+// Run mixin verification as part of the normal build (after compile, before jar).
+tasks.named('build') {
+    dependsOn tasks.named('sourceArchive')
+    dependsOn tasks.named('verifyMixins')
+    // Ensure verification runs before the jar task so a broken mixin never gets packaged.
+    tasks.named('jar') { dependsOn tasks.named('verifyMixins') }
+}
 
 publishing {
     publications {
