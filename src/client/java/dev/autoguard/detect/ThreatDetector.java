@@ -57,7 +57,6 @@ public final class ThreatDetector {
     }
 
     private static boolean isFriendly(Player player, Entity entity) {
-        UUID playerUuid = player.getUUID();
         // Team-based alliance: only meaningful when both sides have teams.
         if (entity.getTeam() != null && player.getTeam() != null && entity.isAlliedTo(player)) return true;
         // Player-owned pets (tamed wolves, cats, etc.) via OwnableEntity.getOwner().
