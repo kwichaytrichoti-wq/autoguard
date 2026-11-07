@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "autoguard",
+  "version": "${version}",
+  "name": "AutoGuard",
+  "description": "Automatically raises your shield for nearby front-facing threats.",
+  "environment": "client",
+  "license": "MIT",
+  "entrypoints": {
+    "client": ["dev.autoguard.client.AutoGuardClient"],
+    "modmenu": ["dev.autoguard.client.AutoGuardModMenu"]
+  },
+  "mixins": ["autoguard.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.20.1",
+    "minecraft": "~26.3",
+    "java": ">=25",
+    "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": ">=21.0.0"
+  }
+}
