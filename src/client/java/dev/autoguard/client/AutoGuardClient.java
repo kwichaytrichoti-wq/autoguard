@@ -26,7 +26,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -335,7 +337,12 @@ public final class AutoGuardClient implements ClientModInitializer {
             if (isArrow) {
                 DamageSource source = player.getLastDamageSource();
                 if (source != null) {
-                    shooter = source.getSource(); // the entity behind the damage (arrow shooter)
+                    Entity direct = source.getEntity();
+                    if (direct instanceof Projectile projectile) {
+                        shooter = projectile.getOwner(); // the entity that shot the arrow
+                    } else {
+                        shooter = direct;
+                    }
                 }
                 if (shooter == null) {
                     // Fallback: infer from nearest projectile or shooter entity.
@@ -378,9 +385,8 @@ public final class AutoGuardClient implements ClientModInitializer {
         try {
             DamageSource source = player.getLastDamageSource();
             if (source != null) {
-                if (source.isProjectile()) return true;
                 Entity direct = source.getEntity();
-                if (direct instanceof net.minecraft.world.entity.projectile.Projectile) return true;
+                if (direct instanceof Projectile) return true;
             }
         } catch (Throwable ignored) {
             // Fall through to projectile inference below.
