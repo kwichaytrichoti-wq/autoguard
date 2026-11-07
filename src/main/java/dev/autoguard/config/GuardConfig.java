@@ -102,26 +102,50 @@ public final class GuardConfig {
 
     /** Blocks near a front-facing threat are raised when the hit is imminent (blocks). */
     public double earlyMargin() {
-        return switch (preset) { case "Cautious" -> 2.0; case "Aggressive" -> 0.5; default -> customEarlyMargin };
+        return switch (preset) {
+            case "Cautious" -> 2.0;
+            case "Aggressive" -> 0.5;
+            default -> customEarlyMargin;
+        };
     }
     public double arcDegrees() {
-        return switch (preset) { case "Cautious" -> 150.0; case "Aggressive" -> 75.0; default -> customArcDegrees };
+        return switch (preset) {
+            case "Cautious" -> 150.0;
+            case "Aggressive" -> 75.0;
+            default -> customArcDegrees;
+        };
     }
     /** Maximum continuous seconds the mod may hold the shield up before a forced release. */
     public double maxContinuousHoldSeconds() {
-        return switch (preset) { case "Cautious" -> 0.5; case "Aggressive" -> 1.2; default -> customMaxContinuousHoldSeconds };
+        return switch (preset) {
+            case "Cautious" -> 0.5;
+            case "Aggressive" -> 1.2;
+            default -> customMaxContinuousHoldSeconds;
+        };
     }
     /** Seconds after a release during which the mod will not re-raise, even if a threat exists. */
     public double cooldownAfterReleaseSeconds() {
-        return switch (preset) { case "Cautious" -> 1.0; case "Aggressive" -> 0.3; default -> customCooldownAfterReleaseSeconds };
+        return switch (preset) {
+            case "Cautious" -> 1.0;
+            case "Aggressive" -> 0.3;
+            default -> customCooldownAfterReleaseSeconds;
+        };
     }
     /** Seconds to keep the shield up after the threat is gone, then release. */
     public double holdAfterThreatGoneSeconds() {
-        return switch (preset) { case "Cautious" -> 0.5; case "Aggressive" -> 0.1; default -> customHoldAfterThreatGoneSeconds };
+        return switch (preset) {
+            case "Cautious" -> 0.5;
+            case "Aggressive" -> 0.1;
+            default -> customHoldAfterThreatGoneSeconds;
+        };
     }
     /** Seconds after any player attack during which the mod will not re-raise the shield. */
     public double attackSuppressSeconds() {
-        return switch (preset) { case "Cautious" -> 0.6; case "Aggressive" -> 0.2; default -> customAttackSuppressSeconds };
+        return switch (preset) {
+            case "Cautious" -> 0.6;
+            case "Aggressive" -> 0.2;
+            default -> customAttackSuppressSeconds;
+        };
     }
     public double projectileArrivalTicks() { return projectileArrivalTicks; }
     public void setPreset(String value) {
