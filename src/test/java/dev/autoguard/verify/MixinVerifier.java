@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -35,57 +34,72 @@ import java.util.jar.JarFile;
  */
 public final class MixinVerifier {
 
-    /** Minecraft client jar path, passed as the first argument. */
     public static void main(String[] args) {
         if (args.length < 1) {
-            System.err.println("MixinVerifier: missing minecraft jar path argument");
-            System.exit(2);
-        }
-        File minecraftJar = new File(args[0]);
-        if (!minecraftJar.exists()) {
-            System.err.println("MixinVerifier: minecraft jar not found: " + minecraftJar);
+            System.err.println("MixinVerifier: missing minecraft jar path argument(s)");
             System.exit(2);
         }
 
         List<String> failures = new ArrayList<>();
+        boolean foundJar = false;
 
-        // 1. Verify Minecraft class has handleKeybinds method
-        boolean hasHandleKeybinds = verifyMethodInClass(minecraftJar,
-                "net/minecraft/client/Minecraft", "handleKeybinds", "()V");
-        if (!hasHandleKeybinds) {
-            failures.add("Minecraft.handleKeybinds()V not found");
-        } else {
-            System.out.println("OK: Minecraft.handleKeybinds()V found");
+        for (String jarPath : args) {
+            File jar = new File(jarPath);
+            if (!jar.exists() || !jar.isFile()) continue;
+
+            // Only try jars that could be the Minecraft client jar.
+            String name = jar.getName().toLowerCase();
+            if (!name.contains("minecraft")) continue;
+
+            foundJar = true;
+            System.out.println("MixinVerifier: checking " + jar);
+
+            // 1. Verify Minecraft class has handleKeybinds method
+            boolean hasHandleKeybinds = verifyMethodInClass(jar,
+                    "net/minecraft/client/Minecraft", "handleKeybinds", "()V");
+            if (!hasHandleKeybinds) {
+                failures.add("Minecraft.handleKeybinds()V not found in " + jar.getName());
+            } else {
+                System.out.println("OK: Minecraft.handleKeybinds()V found");
+            }
+
+            // 2. Verify MultiPlayerGameMode.releaseUsingItem(LocalPlayer) method exists
+            boolean hasReleaseUsingItem = verifyMethodInClass(jar,
+                    "net/minecraft/client/multiplayer/MultiPlayerGameMode",
+                    "releaseUsingItem", "(Lnet/minecraft/client/player/LocalPlayer;)V");
+            if (!hasReleaseUsingItem) {
+                failures.add("MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V not found in " + jar.getName());
+            } else {
+                System.out.println("OK: MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V found");
+            }
+
+            // 3. Verify the INVOKE releaseUsingItem call site exists inside handleKeybinds
+            int invokeCount = countInvokeInMethod(jar,
+                    "net/minecraft/client/Minecraft", "handleKeybinds", "()V",
+                    "net/minecraft/client/multiplayer/MultiPlayerGameMode",
+                    "releaseUsingItem", "(Lnet/minecraft/client/player/LocalPlayer;)V");
+            System.out.println("OK: handleKeybinds contains " + invokeCount
+                    + " INVOKE MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V site(s)");
+            if (invokeCount < 1) {
+                failures.add("No INVOKE MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V found inside Minecraft.handleKeybinds in " + jar.getName());
+            }
+
+            // 4. Verify KeyMapping.clickCount field exists
+            boolean hasClickCount = verifyFieldInClass(jar,
+                    "net/minecraft/client/KeyMapping", "clickCount", "I");
+            if (!hasClickCount) {
+                failures.add("KeyMapping.clickCount field not found in " + jar.getName());
+            } else {
+                System.out.println("OK: KeyMapping.clickCount field found");
+            }
+
+            // Stop after the first Minecraft jar we find and can read.
+            break;
         }
 
-        // 2. Verify MultiPlayerGameMode.releaseUsingItem(LocalPlayer) method exists
-        boolean hasReleaseUsingItem = verifyMethodInClass(minecraftJar,
-                "net/minecraft/client/multiplayer/MultiPlayerGameMode",
-                "releaseUsingItem", "(Lnet/minecraft/client/player/LocalPlayer;)V");
-        if (!hasReleaseUsingItem) {
-            failures.add("MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V not found");
-        } else {
-            System.out.println("OK: MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V found");
-        }
-
-        // 3. Verify the INVOKE releaseUsingItem call site exists inside handleKeybinds
-        int invokeCount = countInvokeInMethod(minecraftJar,
-                "net/minecraft/client/Minecraft", "handleKeybinds", "()V",
-                "net/minecraft/client/multiplayer/MultiPlayerGameMode",
-                "releaseUsingItem", "(Lnet/minecraft/client/player/LocalPlayer;)V");
-        System.out.println("OK: handleKeybinds contains " + invokeCount
-                + " INVOKE MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V site(s)");
-        if (invokeCount < 1) {
-            failures.add("No INVOKE MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V found inside Minecraft.handleKeybinds");
-        }
-
-        // 4. Verify KeyMapping.clickCount field exists
-        boolean hasClickCount = verifyFieldInClass(minecraftJar,
-                "net/minecraft/client/KeyMapping", "clickCount", "I");
-        if (!hasClickCount) {
-            failures.add("KeyMapping.clickCount field not found");
-        } else {
-            System.out.println("OK: KeyMapping.clickCount field found");
+        if (!foundJar) {
+            System.err.println("MixinVerifier: no Minecraft client jar found among arguments");
+            System.exit(2);
         }
 
         if (!failures.isEmpty()) {
