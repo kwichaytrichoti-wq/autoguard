@@ -91,7 +91,8 @@ public final class AutoGuardClient implements ClientModInitializer {
      */
     private static void yieldForPlayerInput(Minecraft client) {
         // Release immediately if a screen opened while we own the shield.
-        if (client.screen != null) {
+        // 26.3: Minecraft.screen moved to Minecraft.gui.screen().
+        if (client.gui != null && client.gui.screen() != null) {
             releaseIfOwned(client, true);
             return;
         }

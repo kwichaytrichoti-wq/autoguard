@@ -15,7 +15,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 
-import java.util.UUID;
+
 
 /** Small-radius, client-observable threat heuristics. Never reads a mob's server-side goal target. */
 public final class ThreatDetector {
@@ -60,11 +60,11 @@ public final class ThreatDetector {
         UUID playerUuid = player.getUUID();
         // Team-based alliance: only meaningful when both sides have teams.
         if (entity.getTeam() != null && player.getTeam() != null && entity.isAlliedTo(player)) return true;
-        // Player-owned pets (tamed wolves, cats, etc.) via OwnableEntity.getOwnerUUID.
+        // Player-owned pets (tamed wolves, cats, etc.) via OwnableEntity.getOwner().
         // isAlliedTo alone is NOT enough: it only works when both entities have teams.
         if (entity instanceof OwnableEntity ownable) {
-            UUID ownerUuid = ownable.getOwnerUUID();
-            if (ownerUuid != null && ownerUuid.equals(playerUuid)) return true;
+            Entity owner = ownable.getOwner();
+            if (owner != null && owner.equals(player)) return true;
         }
         return false;
     }
