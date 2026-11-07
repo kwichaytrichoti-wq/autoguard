@@ -16,7 +16,7 @@ public final class GuardConfigScreen extends Screen {
     private int columnWidth;
     private int left;
     private int right;
-    private EditBox margin, arc, leadTicks, resumeDelay, arrival, durability;
+    private EditBox margin, arc, leadTicks, resumeDelay, maxReactionDistance, rangedReactionDistance, holdAfterThreatGone, arrival, durability;
 
     public GuardConfigScreen(Screen parent) {
         this(parent, false);
@@ -72,8 +72,11 @@ public final class GuardConfigScreen extends Screen {
         arc = number(right, firstY, "Front arc (degrees)", Double.toString(c.customArcDegrees));
         leadTicks = number(left, firstY + 30, "Lead ticks", Double.toString(c.customLeadTicks));
         resumeDelay = number(right, firstY + 30, "Resume delay (s)", Double.toString(c.customResumeDelaySeconds));
-        arrival = number(left, firstY + 60, "Arrival (ticks)", Double.toString(c.projectileArrivalTicks));
-        durability = number(right, firstY + 60, "Minimum durability", Integer.toString(c.minimumDurability));
+        maxReactionDistance = number(left, firstY + 60, "Max reaction dist (blocks)", Double.toString(c.customMaxReactionDistance));
+        rangedReactionDistance = number(right, firstY + 60, "Ranged reaction dist (blocks)", Double.toString(c.customRangedReactionDistance));
+        holdAfterThreatGone = number(left, firstY + 90, "Hold after threat gone (s)", Double.toString(c.customHoldAfterThreatGoneSeconds));
+        arrival = number(right, firstY + 90, "Arrival (ticks)", Double.toString(c.projectileArrivalTicks));
+        durability = number(left, firstY + 120, "Minimum durability", Integer.toString(c.minimumDurability));
         addRenderableWidget(button(left, this.height - 28, "Back", b -> {
             saveValues();
             this.minecraft.gui.setScreen(new GuardConfigScreen(parent, false));
@@ -115,8 +118,11 @@ public final class GuardConfigScreen extends Screen {
             graphics.text(font, "Front arc (degrees)", right, y, 0xFFFFFFFF);
             graphics.text(font, "Lead ticks", left, y + 30, 0xFFFFFFFF);
             graphics.text(font, "Resume delay (s)", right, y + 30, 0xFFFFFFFF);
-            graphics.text(font, "Projectile arrival (ticks)", left, y + 60, 0xFFFFFFFF);
-            graphics.text(font, "Minimum durability", right, y + 60, 0xFFFFFFFF);
+            graphics.text(font, "Max reaction dist (blocks)", left, y + 60, 0xFFFFFFFF);
+            graphics.text(font, "Ranged reaction dist (blocks)", right, y + 60, 0xFFFFFFFF);
+            graphics.text(font, "Hold after threat gone (s)", left, y + 90, 0xFFFFFFFF);
+            graphics.text(font, "Projectile arrival (ticks)", right, y + 90, 0xFFFFFFFF);
+            graphics.text(font, "Minimum durability", left, y + 120, 0xFFFFFFFF);
         }
     }
 
@@ -137,6 +143,9 @@ public final class GuardConfigScreen extends Screen {
         c.customArcDegrees = parse(arc, c.customArcDegrees);
         c.customLeadTicks = parse(leadTicks, c.customLeadTicks);
         c.customResumeDelaySeconds = parse(resumeDelay, c.customResumeDelaySeconds);
+        c.customMaxReactionDistance = parse(maxReactionDistance, c.customMaxReactionDistance);
+        c.customRangedReactionDistance = parse(rangedReactionDistance, c.customRangedReactionDistance);
+        c.customHoldAfterThreatGoneSeconds = parse(holdAfterThreatGone, c.customHoldAfterThreatGoneSeconds);
         c.projectileArrivalTicks = parse(arrival, c.projectileArrivalTicks);
         c.minimumDurability = (int) parse(durability, c.minimumDurability);
         c.sanitize();

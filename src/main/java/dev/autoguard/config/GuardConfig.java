@@ -38,8 +38,11 @@ public final class GuardConfig {
     public String preset = "Normal";
     public double customEarlyMargin = 1.25;
     public double customArcDegrees = 90.0;   // matches vanilla 26.3 blocking arc (plus small margin)
-    public double customLeadTicks = 8.0;     // raise when hit is estimated within this many ticks
+    public double customLeadTicks = 6.0;     // raise when hit is estimated within this many ticks (lowered from 8)
     public double customResumeDelaySeconds = 0.1; // delay before re-raising after attack input ends
+    public double customMaxReactionDistance = 4.5; // blocks: hard cap, no melee threat counts beyond this
+    public double customRangedReactionDistance = 20.0; // blocks: ranged wind-up reaction range
+    public double customHoldAfterThreatGoneSeconds = 0.2; // seconds to keep shield up after threat leaves
     public double projectileArrivalTicks = 12.0;
     public int minimumDurability = 12;
     public boolean showHud = true;
@@ -88,8 +91,11 @@ public final class GuardConfig {
         if (!List.of("Cautious", "Normal", "Aggressive").contains(preset)) preset = "Normal";
         customEarlyMargin = clamp(customEarlyMargin, 0.0, 5.0, 1.25);
         customArcDegrees = clamp(customArcDegrees, 15.0, 180.0, 90.0);
-        customLeadTicks = clamp(customLeadTicks, 0.0, 60.0, 8.0);
+        customLeadTicks = clamp(customLeadTicks, 0.0, 60.0, 6.0);
         customResumeDelaySeconds = clamp(customResumeDelaySeconds, 0.0, 5.0, 0.1);
+        customMaxReactionDistance = clamp(customMaxReactionDistance, 0.0, 50.0, 4.5);
+        customRangedReactionDistance = clamp(customRangedReactionDistance, 0.0, 100.0, 20.0);
+        customHoldAfterThreatGoneSeconds = clamp(customHoldAfterThreatGoneSeconds, 0.0, 10.0, 0.2);
         projectileArrivalTicks = clamp(projectileArrivalTicks, 1.0, 40.0, 12.0);
         minimumDurability = Math.max(0, Math.min(336, minimumDurability));
         if (!List.of("TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT").contains(hudPosition)) hudPosition = "TOP_LEFT";
@@ -120,7 +126,7 @@ public final class GuardConfig {
     /** Ticks before an estimated melee hit at which the shield should be raised. */
     public double leadTicks() {
         return switch (preset) {
-            case "Cautious" -> 12.0;
+            case "Cautious" -> 8.0;
             case "Aggressive" -> 4.0;
             default -> customLeadTicks;
         };
@@ -131,6 +137,30 @@ public final class GuardConfig {
             case "Cautious" -> 0.2;
             case "Aggressive" -> 0.05;
             default -> customResumeDelaySeconds;
+        };
+    }
+    /** Blocks within this distance are considered melee threats; a hard cap independent of lead ticks. */
+    public double maxReactionDistance() {
+        return switch (preset) {
+            case "Cautious" -> 5.5;
+            case "Aggressive" -> 3.8;
+            default -> customMaxReactionDistance;
+        };
+    }
+    /** Blocks within this distance trigger a raise when a ranged mob is drawing its weapon. */
+    public double rangedReactionDistance() {
+        return switch (preset) {
+            case "Cautious" -> 25.0;
+            case "Aggressive" -> 15.0;
+            default -> customRangedReactionDistance;
+        };
+    }
+    /** Seconds to keep the shield raised after the last threat is gone. */
+    public double holdAfterThreatGoneSeconds() {
+        return switch (preset) {
+            case "Cautious" -> 0.4;
+            case "Aggressive" -> 0.1;
+            default -> customHoldAfterThreatGoneSeconds;
         };
     }
     /** Optional: maximum continuous seconds the mod may hold the shield before forced release (0 = disabled). */
