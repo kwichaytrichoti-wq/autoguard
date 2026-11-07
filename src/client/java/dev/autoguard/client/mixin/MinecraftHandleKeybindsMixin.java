@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.player.Player;
 import dev.autoguard.client.AutoGuardClient;
 
 /**
@@ -33,10 +33,10 @@ public class MinecraftHandleKeybindsMixin {
         method = "handleKeybinds",
         at = @At(
             value = "INVOKE",
-            target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;releaseUsingItem(Lnet/minecraft/client/player/LocalPlayer;)V"
+            target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;releaseUsingItem(Lnet/minecraft/world/entity/player/Player;)V"
         )
     )
-    private void onVanillaReleaseUsingItem(MultiPlayerGameMode gameMode, LocalPlayer player) {
+    private void onVanillaReleaseUsingItem(MultiPlayerGameMode gameMode, Player player) {
         if (!logged) {
             logged = true;
             LOGGER.info("AutoGuard handleKeybinds redirect active: vanilla releaseUsingItem intercepted");

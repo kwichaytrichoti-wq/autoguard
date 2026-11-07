@@ -67,21 +67,21 @@ public final class MixinVerifier {
                 System.out.println("OK: Minecraft.handleKeybinds()V found");
             }
 
-            // 2. Verify MultiPlayerGameMode.releaseUsingItem(LocalPlayer) method exists
+            // 2. Verify MultiPlayerGameMode.releaseUsingItem(Player) method exists
             boolean hasReleaseUsingItem = verifyMethodInClass(jar,
                     "net/minecraft/client/multiplayer/MultiPlayerGameMode",
-                    "releaseUsingItem", "(Lnet/minecraft/client/player/LocalPlayer;)V");
+                    "releaseUsingItem", "(Lnet/minecraft/world/entity/player/Player;)V");
             if (!hasReleaseUsingItem) {
-                jarFailures.add("MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V not found");
+                jarFailures.add("MultiPlayerGameMode.releaseUsingItem(Player)V not found");
             } else {
-                System.out.println("OK: MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V found");
+                System.out.println("OK: MultiPlayerGameMode.releaseUsingItem(Player)V found");
             }
 
             // 3. Verify the INVOKE releaseUsingItem call site exists inside handleKeybinds
             int invokeCount = countInvokeInMethod(jar,
                     "net/minecraft/client/Minecraft", "handleKeybinds", "()V",
                     "net/minecraft/client/multiplayer/MultiPlayerGameMode",
-                    "releaseUsingItem", "(Lnet/minecraft/client/player/LocalPlayer;)V");
+                    "releaseUsingItem", "(Lnet/minecraft/world/entity/player/Player;)V");
             System.out.println("OK: handleKeybinds contains " + invokeCount
                     + " INVOKE MultiPlayerGameMode.releaseUsingItem(LocalPlayer)V site(s)");
             if (invokeCount < 1) {
