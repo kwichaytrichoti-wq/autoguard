@@ -86,10 +86,12 @@ tasks.register('verifyMixins', JavaExec) {
 
 // Run mixin verification as part of the normal build (after compile, before jar).
 tasks.named('build') {
-    dependsOn tasks.named('sourceArchive')
-    dependsOn tasks.named('verifyMixins')
-    // Ensure verification runs before the jar task so a broken mixin never gets packaged.
-    tasks.named('jar') { dependsOn tasks.named('verifyMixins') }
+    dependsOn 'sourceArchive'
+    dependsOn 'verifyMixins'
+}
+// Ensure verification runs before the jar task so a broken mixin never gets packaged.
+tasks.named('jar') {
+    dependsOn 'verifyMixins'
 }
 
 publishing {
