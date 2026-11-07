@@ -107,13 +107,13 @@ public final class AutoGuardClient implements ClientModInitializer {
         // Release immediately if a screen opened while we own the shield.
         // 26.3: Minecraft.screen moved to Minecraft.gui.screen().
         if (client.gui != null && client.gui.screen() != null) {
-            releaseIfOwned(client, true);
+            releaseIfOwned(client, true, "screen-open");
             return;
         }
 
         LocalPlayer player = client.player;
         if (player == null) {
-            releaseIfOwned(client, true);
+            releaseIfOwned(client, true, "no-player");
             return;
         }
 
@@ -272,10 +272,10 @@ public final class AutoGuardClient implements ClientModInitializer {
             return;
         }
 
-        // No threat.
+        // No threat: release after a short hold (default 0.2 s, matching old Normal preset).
         if (raisedByMod) {
             if (noThreatSince < 0L) noThreatSince = player.tickCount;
-            long holdTicks = Math.round(CONFIG.holdAfterThreatGoneSeconds() * 20.0);
+            long holdTicks = Math.round(0.2 * 20.0);
             if (player.tickCount - noThreatSince >= holdTicks) {
                 releaseIfOwned(client, true, "threat-gone");
                 debug("RELEASE threat-gone", player);

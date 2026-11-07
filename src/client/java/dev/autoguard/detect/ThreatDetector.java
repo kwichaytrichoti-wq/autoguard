@@ -142,7 +142,7 @@ public final class ThreatDetector {
     }
 
     /** Distance to the nearest threat entity, or -1 if none. Used by the damage report. */
-    static double nearestThreatDistance(Level level, Player player, GuardConfig config) {
+    public static double nearestThreatDistance(Level level, Player player, GuardConfig config) {
         AABB area = player.getBoundingBox().inflate(RADIUS);
         double nearest = -1.0;
         for (Entity entity : level.getEntities(player, area, candidate -> true)) {
