@@ -24,16 +24,16 @@ jobs:
       - name: Upload jars
         uses: actions/upload-artifact@v4
         with:
-          name: autoguard-1.0.3
+          name: autoguard-1.0.4
           path: |
-            build/libs/autoguard-1.0.3.jar
-            build/libs/autoguard-1.0.3-sources.jar
-            build/distributions/autoguard-1.0.3-src.zip
+            build/libs/autoguard-1.0.4.jar
+            build/libs/autoguard-1.0.4-sources.jar
+            build/distributions/autoguard-1.0.4-src.zip
       - name: Publish build outputs to artifacts branch
         if: success()
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add -f build/libs/autoguard-1.0.3.jar build/libs/autoguard-1.0.3-sources.jar build/distributions/autoguard-1.0.3-src.zip
+          git add -f build/libs/autoguard-1.0.4.jar build/libs/autoguard-1.0.4-sources.jar build/distributions/autoguard-1.0.4-src.zip
           git commit -m "ci: publish AutoGuard build outputs from ${GITHUB_SHA}" || echo "nothing new to commit"
           git push -f origin HEAD:artifacts

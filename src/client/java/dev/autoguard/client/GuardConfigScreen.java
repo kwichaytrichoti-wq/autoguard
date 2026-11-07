@@ -16,7 +16,7 @@ public final class GuardConfigScreen extends Screen {
     private int columnWidth;
     private int left;
     private int right;
-    private EditBox margin, arc, hold, maxHold, cooldown, holdAfterThreat, attackSuppress, arrival, durability;
+    private EditBox margin, arc, leadTicks, resumeDelay, arrival, durability;
 
     public GuardConfigScreen(Screen parent) {
         this(parent, false);
@@ -70,12 +70,10 @@ public final class GuardConfigScreen extends Screen {
         int firstY = Math.max(24, this.height / 2 - 90);
         margin = number(left, firstY, "Early margin (blocks)", Double.toString(c.customEarlyMargin));
         arc = number(right, firstY, "Front arc (degrees)", Double.toString(c.customArcDegrees));
-        hold = number(left, firstY + 30, "Hold after threat (s)", Double.toString(c.customHoldAfterThreatGoneSeconds));
-        maxHold = number(right, firstY + 30, "Max hold (s)", Double.toString(c.customMaxContinuousHoldSeconds));
-        cooldown = number(left, firstY + 60, "Cooldown after release (s)", Double.toString(c.customCooldownAfterReleaseSeconds));
-        attackSuppress = number(right, firstY + 60, "Attack suppress (s)", Double.toString(c.customAttackSuppressSeconds));
-        arrival = number(left, firstY + 90, "Arrival (ticks)", Double.toString(c.projectileArrivalTicks));
-        durability = number(right, firstY + 90, "Minimum durability", Integer.toString(c.minimumDurability));
+        leadTicks = number(left, firstY + 30, "Lead ticks", Double.toString(c.customLeadTicks));
+        resumeDelay = number(right, firstY + 30, "Resume delay (s)", Double.toString(c.customResumeDelaySeconds));
+        arrival = number(left, firstY + 60, "Arrival (ticks)", Double.toString(c.projectileArrivalTicks));
+        durability = number(right, firstY + 60, "Minimum durability", Integer.toString(c.minimumDurability));
         addRenderableWidget(button(left, this.height - 28, "Back", b -> {
             saveValues();
             this.minecraft.gui.setScreen(new GuardConfigScreen(parent, false));
@@ -115,12 +113,10 @@ public final class GuardConfigScreen extends Screen {
             int y = Math.max(18, height / 2 - 112);
             graphics.text(font, "Early margin (blocks)", left, y, 0xFFFFFFFF);
             graphics.text(font, "Front arc (degrees)", right, y, 0xFFFFFFFF);
-            graphics.text(font, "Hold after threat (s)", left, y + 30, 0xFFFFFFFF);
-            graphics.text(font, "Max hold (s)", right, y + 30, 0xFFFFFFFF);
-            graphics.text(font, "Cooldown after release (s)", left, y + 60, 0xFFFFFFFF);
-            graphics.text(font, "Attack suppress (s)", right, y + 60, 0xFFFFFFFF);
-            graphics.text(font, "Projectile arrival (ticks)", left, y + 90, 0xFFFFFFFF);
-            graphics.text(font, "Minimum durability", right, y + 90, 0xFFFFFFFF);
+            graphics.text(font, "Lead ticks", left, y + 30, 0xFFFFFFFF);
+            graphics.text(font, "Resume delay (s)", right, y + 30, 0xFFFFFFFF);
+            graphics.text(font, "Projectile arrival (ticks)", left, y + 60, 0xFFFFFFFF);
+            graphics.text(font, "Minimum durability", right, y + 60, 0xFFFFFFFF);
         }
     }
 
@@ -139,10 +135,8 @@ public final class GuardConfigScreen extends Screen {
         GuardConfig c = AutoGuardClient.CONFIG;
         c.customEarlyMargin = parse(margin, c.customEarlyMargin);
         c.customArcDegrees = parse(arc, c.customArcDegrees);
-        c.customHoldAfterThreatGoneSeconds = parse(hold, c.customHoldAfterThreatGoneSeconds);
-        c.customMaxContinuousHoldSeconds = parse(maxHold, c.customMaxContinuousHoldSeconds);
-        c.customCooldownAfterReleaseSeconds = parse(cooldown, c.customCooldownAfterReleaseSeconds);
-        c.customAttackSuppressSeconds = parse(attackSuppress, c.customAttackSuppressSeconds);
+        c.customLeadTicks = parse(leadTicks, c.customLeadTicks);
+        c.customResumeDelaySeconds = parse(resumeDelay, c.customResumeDelaySeconds);
         c.projectileArrivalTicks = parse(arrival, c.projectileArrivalTicks);
         c.minimumDurability = (int) parse(durability, c.minimumDurability);
         c.sanitize();

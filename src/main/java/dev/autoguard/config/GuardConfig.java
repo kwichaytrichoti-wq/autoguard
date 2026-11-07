@@ -22,7 +22,7 @@ public final class GuardConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger("AutoGuard");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("autoguard.json");
-    public static final int CURRENT_SCHEMA = 2;
+    public static final int CURRENT_SCHEMA = 3;
 
     public int schemaVersion = CURRENT_SCHEMA;
     public boolean enabled = true;
@@ -37,11 +37,9 @@ public final class GuardConfig {
     public boolean playerInputPriority = true;
     public String preset = "Normal";
     public double customEarlyMargin = 1.25;
-    public double customArcDegrees = 120.0;
-    public double customMaxContinuousHoldSeconds = 0.8;
-    public double customCooldownAfterReleaseSeconds = 0.6;
-    public double customHoldAfterThreatGoneSeconds = 0.2;
-    public double customAttackSuppressSeconds = 0.4;
+    public double customArcDegrees = 90.0;   // matches vanilla 26.3 blocking arc (plus small margin)
+    public double customLeadTicks = 8.0;     // raise when hit is estimated within this many ticks
+    public double customResumeDelaySeconds = 0.1; // delay before re-raising after attack input ends
     public double projectileArrivalTicks = 12.0;
     public int minimumDurability = 12;
     public boolean showHud = true;
@@ -52,12 +50,15 @@ public final class GuardConfig {
     private transient Set<Identifier> alwaysReactIds = Set.of();
     private transient Set<Identifier> neverReactIds = Set.of();
 
+    // Duty-cycle settings kept as optional values (0 = disabled).
+    public double customMaxContinuousHoldSeconds = 0.0;
+    public double customCooldownAfterReleaseSeconds = 0.0;
+
     public static GuardConfig load() {
         GuardConfig config = new GuardConfig();
         try {
             if (Files.exists(FILE)) {
                 JsonObject json = JsonParser.parseString(Files.readString(FILE)).getAsJsonObject();
-                // Gson leaves absent keys at Java defaults; merge onto defaults so legacy files are safe.
                 JsonObject merged = GSON.toJsonTree(config).getAsJsonObject();
                 json.entrySet().forEach(entry -> merged.add(entry.getKey(), entry.getValue()));
                 GuardConfig parsed = GSON.fromJson(merged, GuardConfig.class);
@@ -86,16 +87,17 @@ public final class GuardConfig {
         schemaVersion = CURRENT_SCHEMA;
         if (!List.of("Cautious", "Normal", "Aggressive").contains(preset)) preset = "Normal";
         customEarlyMargin = clamp(customEarlyMargin, 0.0, 5.0, 1.25);
-        customArcDegrees = clamp(customArcDegrees, 15.0, 180.0, 120.0);
-        customMaxContinuousHoldSeconds = clamp(customMaxContinuousHoldSeconds, 0.1, 10.0, 0.8);
-        customCooldownAfterReleaseSeconds = clamp(customCooldownAfterReleaseSeconds, 0.0, 10.0, 0.6);
-        customHoldAfterThreatGoneSeconds = clamp(customHoldAfterThreatGoneSeconds, 0.0, 5.0, 0.2);
-        customAttackSuppressSeconds = clamp(customAttackSuppressSeconds, 0.0, 5.0, 0.4);
+        customArcDegrees = clamp(customArcDegrees, 15.0, 180.0, 90.0);
+        customLeadTicks = clamp(customLeadTicks, 0.0, 60.0, 8.0);
+        customResumeDelaySeconds = clamp(customResumeDelaySeconds, 0.0, 5.0, 0.1);
         projectileArrivalTicks = clamp(projectileArrivalTicks, 1.0, 40.0, 12.0);
         minimumDurability = Math.max(0, Math.min(336, minimumDurability));
         if (!List.of("TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT").contains(hudPosition)) hudPosition = "TOP_LEFT";
         if (alwaysReactTo == null) alwaysReactTo = new ArrayList<>();
         if (neverReactTo == null) neverReactTo = new ArrayList<>();
+        // Duty-cycle values are optional; 0 means disabled. Clamp to non-negative.
+        customMaxContinuousHoldSeconds = Math.max(0.0, customMaxContinuousHoldSeconds);
+        customCooldownAfterReleaseSeconds = Math.max(0.0, customCooldownAfterReleaseSeconds);
         alwaysReactIds = parseIds(alwaysReactTo);
         neverReactIds = parseIds(neverReactTo);
     }
@@ -110,41 +112,41 @@ public final class GuardConfig {
     }
     public double arcDegrees() {
         return switch (preset) {
-            case "Cautious" -> 150.0;
+            case "Cautious" -> 110.0;   // vanilla arc (90) + margin
             case "Aggressive" -> 75.0;
             default -> customArcDegrees;
         };
     }
-    /** Maximum continuous seconds the mod may hold the shield up before a forced release. */
+    /** Ticks before an estimated melee hit at which the shield should be raised. */
+    public double leadTicks() {
+        return switch (preset) {
+            case "Cautious" -> 12.0;
+            case "Aggressive" -> 4.0;
+            default -> customLeadTicks;
+        };
+    }
+    /** Seconds to wait after attack input ends before re-raising the shield. */
+    public double resumeDelaySeconds() {
+        return switch (preset) {
+            case "Cautious" -> 0.2;
+            case "Aggressive" -> 0.05;
+            default -> customResumeDelaySeconds;
+        };
+    }
+    /** Optional: maximum continuous seconds the mod may hold the shield before forced release (0 = disabled). */
     public double maxContinuousHoldSeconds() {
         return switch (preset) {
-            case "Cautious" -> 0.5;
-            case "Aggressive" -> 1.2;
+            case "Cautious" -> 0.0;
+            case "Aggressive" -> 0.0;
             default -> customMaxContinuousHoldSeconds;
         };
     }
-    /** Seconds after a release during which the mod will not re-raise, even if a threat exists. */
+    /** Optional: seconds after a release during which the mod will not re-raise (0 = disabled). */
     public double cooldownAfterReleaseSeconds() {
         return switch (preset) {
-            case "Cautious" -> 1.0;
-            case "Aggressive" -> 0.3;
+            case "Cautious" -> 0.0;
+            case "Aggressive" -> 0.0;
             default -> customCooldownAfterReleaseSeconds;
-        };
-    }
-    /** Seconds to keep the shield up after the threat is gone, then release. */
-    public double holdAfterThreatGoneSeconds() {
-        return switch (preset) {
-            case "Cautious" -> 0.5;
-            case "Aggressive" -> 0.1;
-            default -> customHoldAfterThreatGoneSeconds;
-        };
-    }
-    /** Seconds after any player attack during which the mod will not re-raise the shield. */
-    public double attackSuppressSeconds() {
-        return switch (preset) {
-            case "Cautious" -> 0.6;
-            case "Aggressive" -> 0.2;
-            default -> customAttackSuppressSeconds;
         };
     }
     public double projectileArrivalTicks() { return projectileArrivalTicks; }

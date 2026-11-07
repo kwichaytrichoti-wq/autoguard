@@ -15,9 +15,15 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.Level;
 
-
-
-/** Small-radius, client-observable threat heuristics. Never reads a mob's server-side goal target. */
+/**
+ * Small-radius, client-observable threat heuristics. Never reads a mob's server-side goal target.
+ * <p>
+ * Speed-aware raising: for melee threats, estimate the ticks until the attacker can hit
+ * (distance to its attack reach divided by its approach speed) and flag the entity as a
+ * threat when that estimate is at most {@code config.leadTicks()}, in addition to the
+ * existing proximity rule. This lets the shield be raised before the attacker is in reach,
+ * giving the 5-tick vanilla shield raise delay time to complete.
+ */
 public final class ThreatDetector {
     private static final double RADIUS = 8.0;
     private ThreatDetector() {}
@@ -50,10 +56,41 @@ public final class ThreatDetector {
             if (!hostile && !angryNeutral) continue;
             if (!config.melee || !inFront(player, entity.position(), config.arcDegrees())) continue;
             double distance = player.distanceTo(entity);
-            if (distance > 3.0 + config.earlyMargin()) continue;
+            // Proximity rule: threat if within early margin of reach.
+            if (distance > 3.0 + config.earlyMargin()) {
+                // Speed-aware rule: estimate ticks until the mob can reach the player.
+                // If the mob will be in reach within leadTicks, treat as a threat now so the
+                // shield has time to raise (vanilla needs 5 ticks before blocking activates).
+                if (!speedAwareThreat(player, living, distance, config)) continue;
+            }
             if (approachingOrFacing(player, living, distance)) return true;
         }
         return false;
+    }
+
+    /**
+     * Estimate ticks until the mob can hit the player.
+     * <p>
+     * Uses distance minus the mob's attack reach, divided by the mob's horizontal approach
+     * speed. If the result is at most {@code config.leadTicks()}, the mob will be able to hit
+     * soon enough that the shield should start raising now.
+     */
+    private static boolean speedAwareThreat(Player player, LivingEntity mob, double distance, GuardConfig config) {
+        double attackReach = mobAttackReach(mob);
+        double remaining = distance - attackReach;
+        if (remaining <= 0.0) return true; // already in reach
+        Vec3 motion = mob.getDeltaMovement();
+        double speedSq = motion.horizontalDistanceSqr();
+        if (speedSq <= 0.0004) return false; // not moving toward player
+        double speed = Math.sqrt(speedSq);
+        double ticksUntilHit = remaining / speed;
+        return ticksUntilHit <= config.leadTicks();
+    }
+
+    /** Typical melee attack reach for a mob (blocks). Most mobs use 3.0. */
+    private static double mobAttackReach(LivingEntity mob) {
+        // Most hostile mobs have an attack reach of 3.0 blocks.
+        return 3.0;
     }
 
     private static boolean isFriendly(Player player, Entity entity) {
@@ -102,6 +139,28 @@ public final class ThreatDetector {
         // 26.3: LivingEntity has no exposed swing field; swing cue dropped.
         // Removed the "distance < 2.0 is always a threat" shortcut: proximity alone is not a reliable threat signal.
         return approaching || lookingAtPlayer;
+    }
+
+    /** Distance to the nearest threat entity, or -1 if none. Used by the damage report. */
+    static double nearestThreatDistance(Level level, Player player, GuardConfig config) {
+        AABB area = player.getBoundingBox().inflate(RADIUS);
+        double nearest = -1.0;
+        for (Entity entity : level.getEntities(player, area, candidate -> true)) {
+            if (entity == player || entity.isRemoved()) continue;
+            Identifier id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+            if (id == null || config.neverReactTo(id)) continue;
+            if (isFriendly(player, entity)) continue;
+            if (entity instanceof Projectile) continue;
+            if (!(entity instanceof LivingEntity living) || !living.isAlive()) continue;
+            if (entity instanceof Creeper && !config.creepers) continue;
+            boolean hostile = entity instanceof Monster && config.hostileMobs;
+            boolean angryNeutral = entity instanceof Mob mob && config.angryNeutralMobs && mob.isAggressive() && !(entity instanceof Monster);
+            if (!hostile && !angryNeutral) continue;
+            if (!config.melee || !inFront(player, entity.position(), config.arcDegrees())) continue;
+            double distance = player.distanceTo(entity);
+            if (nearest < 0.0 || distance < nearest) nearest = distance;
+        }
+        return nearest;
     }
 
     private static boolean inFront(Player player, Vec3 threatPosition, double arcDegrees) {

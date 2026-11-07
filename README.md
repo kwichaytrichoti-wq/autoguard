@@ -1,4 +1,4 @@
-# AutoGuard 1.0.2
+# AutoGuard 1.0.4
 
 Client-side Fabric mod for Minecraft Java 26.3. AutoGuard attempts to raise a held vanilla shield shortly before a nearby, front-facing threat reaches the player, then releases it after the configured hold period. It uses the client game mode's ordinary `useItem(player, InteractionHand)` interaction and never changes inventory slots or swaps hands.
 
@@ -31,8 +31,10 @@ The key binding is listed as **Toggle AutoGuard** and is unbound initially. Use 
 Open the configuration from Mod Menu when installed. The screen provides toggles and number fields (not sliders). Advanced values and per-entity ID allow/deny lists are stored in `.minecraft/config/autoguard.json`.
 
 - Presets set early margin, front arc, and hold time.
-- Numeric values include early margin (blocks), front arc (degrees), hold after threat gone (seconds), max continuous hold (seconds), cooldown after release (seconds), attack suppress (seconds), projectile arrival limit (ticks), and minimum remaining shield durability.
-- Duty cycle: the shield is not held indefinitely. It is released after the threat is gone (plus a short hold), forced down after max continuous hold, and suppressed from re-raising after any attack or during cooldown.
+- Numeric values include early margin (blocks), front arc (degrees), lead ticks, resume delay (seconds), projectile arrival limit (ticks), and minimum remaining shield durability.
+- Duty cycle: the shield is not held indefinitely by default. Max continuous hold and cooldown after release default to 0 (disabled). A hidden failsafe force-releases after ~15 seconds of continuous hold so a stuck shield can never happen.
+- Attack-driven rest: the shield rests only because the player attacks. It releases when you attack, stays down while attack input is active, and re-raises after a short resume delay when the attack input ends and a threat remains.
+- Damage report: with debug on, taking damage prints blocking state, isUsingItem, ticks since raise, nearest threat distance, and ticks since last attack. `/autoguard stats` shows hits taken while blocking / not blocking, shield raises, and releases for attack.
 - `alwaysReactTo` and `neverReactTo` accept registry IDs such as `minecraft:zombie`. The never list takes precedence.
 - Remote servers are disabled by default. Enable `allowRemoteServers` only if you accept the server-specific consequences.
 
