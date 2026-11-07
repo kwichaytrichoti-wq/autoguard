@@ -47,6 +47,11 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
 
+// No JUnit tests in this project; MixinVerifier is a build-time check run via verifyMixins task.
+tasks.named('test') {
+    failOnNoDiscoveredTests = false
+}
+
 jar {
     from('LICENSE') { rename { "${it}_${project.base.archivesName.get()}" } }
 }
