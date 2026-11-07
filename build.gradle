@@ -72,18 +72,16 @@ tasks.register('verifyMixins', JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     mainClass = 'dev.autoguard.verify.MixinVerifier'
 
-    // Pass all candidate Minecraft jars from both main and client runtime classpaths.
+    // Pass all candidate Minecraft jars from the client runtime classpath (where the
+    // client-only classes like Minecraft, MultiPlayerGameMode, and KeyMapping live).
     doFirst {
         def candidates = []
-        sourceSets.main.runtimeClasspath.files.each { f ->
-            if (f.name.toLowerCase().contains('minecraft') && f.name.endsWith('.jar') && f.isFile()) candidates << f.absolutePath
-        }
         sourceSets.client.runtimeClasspath.files.each { f ->
             if (f.name.toLowerCase().contains('minecraft') && f.name.endsWith('.jar') && f.isFile()) candidates << f.absolutePath
         }
         candidates = candidates.unique()
         if (candidates.isEmpty()) {
-            throw new GradleException("verifyMixins: could not find Minecraft client jar on any runtime classpath")
+            throw new GradleException("verifyMixins: could not find Minecraft client jar on client runtime classpath")
         }
         args = candidates
     }
