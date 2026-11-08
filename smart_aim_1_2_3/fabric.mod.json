@@ -1,0 +1,36 @@
+{
+	"schemaVersion": 1,
+	"id": "smartaim",
+	"version": "1.2.3",
+	"name": "Smart Aim",
+	"description": "Steers your own arrows, tridents, thrown items and fishing bobbers a few degrees per tick towards mobs, without touching vanilla damage, enchantments or kill credit. No melee assist, never aims at players.",
+	"authors": [
+		"smartaim"
+	],
+	"license": "MIT",
+	"icon": "assets/smartaim/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.smartaim.SmartAim"
+		],
+		"client": [
+			"com.smartaim.client.SmartAimClient"
+		],
+		"modmenu": [
+			"com.smartaim.client.SmartAimModMenu"
+		]
+	},
+	"mixins": [
+		"smartaim.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"modmenu": ">=21.0.0"
+	}
+}
