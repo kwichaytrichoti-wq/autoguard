@@ -1,0 +1,11 @@
+.gradle/
+build/
+out/
+.local/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+smartaim-*.jar
+smartaim-*-src.zip
+*.class

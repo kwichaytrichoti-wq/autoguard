@@ -1,0 +1,70 @@
+plugins {
+   id 'fabric-loom' version '1.19.3'
+   id 'maven-publish'
+}
+
+group = project.maven_group
+version = project.mod_version
+base {
+   archivesName = project.archives_base_name
+}
+
+repositories {
+   maven { url = 'https://maven.fabricmc.net/' }
+   maven { url = 'https://maven.terraformersmc.com/releases/' }
+   mavenCentral()
+}
+
+dependencies {
+   minecraft "com.mojang:minecraft:${project.minecraft_version}"
+   mappings loom.officialMojangMappings()
+   modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+   modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+   modCompileOnly "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+   testImplementation platform('org.junit:junit-bom:5.12.2')
+   testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+java {
+   toolchain {
+      languageVersion = JavaLanguageVersion.of(25)
+   }
+   withSourcesJar()
+}
+
+test {
+   useJUnitPlatform()
+}
+
+tasks.register('sourceZip', Zip) {
+   archiveFileName = "${project.archives_base_name}-${project.version}-src.zip"
+   destinationDirectory = layout.buildDirectory.dir('distributions')
+   from(projectDir) {
+      exclude '.git/**', '.gradle/**', 'build/**', 'smartaim-*.jar', 'smartaim-*-src.zip'
+   }
+}
+
+build.dependsOn tasks.named('sourceZip')
+
+processResources {
+   inputs.property 'version', project.version
+   filesMatching('fabric.mod.json') {
+      expand 'version': project.version
+   }
+}
+
+jar {
+   from('LICENSE') {
+      rename { "${it}_${project.base.archivesName.get()}" }
+   }
+}
+
+publishing {
+   publications {
+      mavenJava(MavenPublication) {
+         artifactId = project.archives_base_name
+         from components.java
+      }
+   }
+}

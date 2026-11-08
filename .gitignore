@@ -1,0 +1,19 @@
+# Gradle and build output
+.gradle/
+**/.gradle/
+**/build/
+**/out/
+
+# Local tools, downloaded runtime/dependencies and Drive exports
+.local/
+google_drive/
+/smartaim-1.3.0-src-unbuilt.zip
+smart-aim/smartaim-*.jar
+smart-aim/smartaim-*-src.zip
+*.class
+
+# IDE / operating system
+.idea/
+*.iml
+.vscode/
+.DS_Store
